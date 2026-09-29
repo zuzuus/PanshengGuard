@@ -1,0 +1,16 @@
+scenario,detection_attacked_pct,detection_defended_pct,recovered_pts
+no attack,100.0,100.0,0.0
+homoglyph,97.8,100.0,2.2
+leetspeak,95.9,98.5,2.6
+split words,97.0,100.0,3.0
+dilute text,100.0,100.0,0.0
+synonym swap,97.2,97.2,0.0
+links cleaned,78.7,78.7,0.0
+text + links,46.2,78.7,32.5
+
+false_alarm_legitimate_without_defence_pct,0.0
+false_alarm_legitimate_with_defence_pct,0.0
+phishing_emails,539
+legitimate_emails,503
+threshold,0.5
+generated,20260923-001137

@@ -1,0 +1,164 @@
+/*
+ * Banner and highlight styles, injected into Gmail.
+ *
+ * Every rule is scoped under .pg- and sets its own values explicitly rather
+ * than inheriting: this markup lands inside Google's stylesheet, so anything
+ * left unset would pick up Gmail's formatting instead. Colours mirror the web
+ * app's risk scale so a verdict reads the same in both places.
+ */
+
+/* ------------------------------------------------------------------ *
+ * Scan button
+ * ------------------------------------------------------------------ */
+.pg-button {
+  display: inline-block;
+  margin: 12px 0 8px;
+  padding: 8px 16px;
+  border: 1px solid #C1440E;
+  border-radius: 8px;
+  background: #C1440E;
+  color: #F5F1E8;
+  font: 600 13px/1.4 Inter, Roboto, Arial, sans-serif;
+  cursor: pointer;
+}
+.pg-button:hover:not(:disabled) { background: #A63A0C; }
+.pg-button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ------------------------------------------------------------------ *
+ * Banner
+ * ------------------------------------------------------------------ */
+.pg-banner {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border-left: 4px solid #8A94A6;
+  background: #F6F7F9;
+  color: #1B2430;
+  font: 400 13px/1.6 Inter, Roboto, Arial, sans-serif;
+}
+
+.pg-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pg-icon { font-size: 15px; line-height: 1; }
+.pg-verdict { font-weight: 700; font-size: 14px; letter-spacing: 0.01em; }
+
+.pg-badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.07);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pg-score { color: #5C6577; font-size: 12px; }
+
+.pg-signals { margin: 10px 0 0; padding-left: 20px; }
+.pg-signals li { margin-bottom: 4px; }
+.pg-none { margin: 10px 0 0; color: #5C6577; }
+.pg-message { margin-top: 6px; color: #5C6577; }
+
+.pg-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #1B2430;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pg-banner details { margin-top: 10px; }
+.pg-banner summary {
+  cursor: pointer;
+  color: #5C6577;
+  font-size: 12px;
+  font-weight: 600;
+}
+.pg-banner details .pg-signals { margin-top: 6px; }
+
+/* ------------------------------------------------------------------ *
+ * Severity: a clean result should be quiet, a critical one hard to skip
+ * ------------------------------------------------------------------ */
+.pg-idle     { border-left-color: #8A94A6; }
+.pg-error    { border-left-color: #8A94A6; background: #F6F7F9; }
+
+.pg-low {
+  border-left-color: #3B7A57;
+  background: #F1F8F4;
+}
+.pg-moderate {
+  border-left-color: #D4A017;
+  background: #FCF8EC;
+}
+.pg-high {
+  border-left-width: 6px;
+  border-left-color: #FF8A5C;
+  background: #FEF3EE;
+}
+.pg-critical {
+  border-left-width: 8px;
+  border-left-color: #C1440E;
+  background: #FDEEE9;
+  box-shadow: 0 2px 14px rgba(193, 68, 14, 0.18);
+}
+.pg-critical .pg-verdict { font-size: 17px; }
+.pg-critical .pg-icon { font-size: 18px; color: #C1440E; }
+.pg-high .pg-icon { color: #FF8A5C; }
+.pg-low .pg-icon { color: #3B7A57; }
+.pg-moderate .pg-icon { color: #B8890F; }
+
+/* The two quieter tiers take less room. */
+.pg-compact { padding: 10px 14px; }
+.pg-compact .pg-verdict { font-size: 13px; }
+
+/* ------------------------------------------------------------------ *
+ * Legend
+ * ------------------------------------------------------------------ */
+.pg-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.pg-legend-intro { color: #5C6577; font-size: 12px; margin-right: 2px; }
+
+.pg-chip {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1B2430;
+}
+
+/* ------------------------------------------------------------------ *
+ * In-message highlights
+ * --------------------------------------------------------------------
+ * One colour per manipulation technique, so the legend above the message
+ * and the marks inside it read as the same system. Kept light enough that
+ * the original text stays comfortably readable underneath.
+ * ------------------------------------------------------------------ */
+.pg-hl {
+  padding: 1px 2px;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.pg-hl-urgency   { background: #FFE0A3; box-shadow: inset 0 -2px 0 #E0A82E; }
+.pg-hl-authority { background: #CFE3FF; box-shadow: inset 0 -2px 0 #4A82D0; }
+.pg-hl-fear      { background: #FFCFC2; box-shadow: inset 0 -2px 0 #E8512B; }
+.pg-hl-scarcity  { background: #E2D5F5; box-shadow: inset 0 -2px 0 #8B5FC4; }
+
+/* The chips reuse the same fills, minus the underline. */
+.pg-chip.pg-hl-urgency   { background: #FFE0A3; box-shadow: none; }
+.pg-chip.pg-hl-authority { background: #CFE3FF; box-shadow: none; }
+.pg-chip.pg-hl-fear      { background: #FFCFC2; box-shadow: none; }
+.pg-chip.pg-hl-scarcity  { background: #E2D5F5; box-shadow: none; }

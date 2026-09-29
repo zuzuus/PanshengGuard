@@ -1,0 +1,1657 @@
+/* ==========================================================================
+   PanshengGuard — "Case File" design system
+   --------------------------------------------------------------------------
+   A dark forensic-dossier theme: ink navy paper, brass indexing, seal red for
+   danger. Refined from the original single-surface version — the main changes
+   are a four-level surface ramp so depth reads properly, a fluid type scale,
+   a spacing scale, and a faint paper grain so large dark areas aren't flat.
+
+   Class names from the original stylesheet are all preserved.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Tokens
+   -------------------------------------------------------------------------- */
+:root {
+  /* Surface ramp — each step is a real elevation, not just a tint.
+     Dark UIs read as cheap when everything sits on one plane. */
+  --surface-0: #12181F;   /* page floor, behind everything */
+  --surface-1: #1B2430;   /* base plane */
+  --surface-2: #222D3B;   /* cards */
+  --surface-3: #2A3745;   /* raised: inputs, tags, nested boxes */
+  --surface-4: #33414F;   /* hover / active on raised */
+
+  /* Kept as aliases so any existing rule or inline style still resolves. */
+  --ink-navy: var(--surface-1);
+  --ink-navy-light: var(--surface-2);
+
+  /* Ink */
+  --paper-cream: #F5F1E8;
+  --paper-dim: #CFC9BC;
+  --slate: #939CAD;
+  --slate-dark: #6A7386;
+
+  /* Accents */
+  --brass: #D4A017;
+  --brass-bright: #EDBE3C;
+  --brass-dim: rgba(212, 160, 23, 0.16);
+  --seal-red: #C1440E;
+  --seal-red-bright: #E86A32;
+  --seal-red-dim: rgba(193, 68, 14, 0.16);
+  --safe-green: #3B7A57;
+  --green-bright: #6FCF97;
+  --green-dim: rgba(59, 122, 87, 0.16);
+
+  /* Risk scale — deliberately its own ramp, not the brand accents.
+     Moderate used to be plain --brass, which is also the eyebrow, the active
+     nav item, every link and every card icon; a severity level rendered in the
+     same colour as site chrome reads as decoration rather than a warning. This
+     yellow is brighter and more saturated than brushed brass, so it reads as a
+     warning light. Brass is now reserved for navigation and identity. */
+  --risk-low: #5BC489;
+  --risk-moderate: #F0C040;
+  --risk-high: #FF8A5C;
+  --risk-critical: #E8512B;
+
+  /* Measurement, not severity — used by the sophistication gauge so it cannot
+     be mistaken for a second risk reading. */
+  --gauge-neutral: #7D97BD;
+
+  /* Borders — three weights instead of one hardcoded rgba everywhere */
+  --border-subtle: rgba(245, 241, 232, 0.07);
+  --border-default: rgba(245, 241, 232, 0.13);
+  --border-brass: rgba(212, 160, 23, 0.32);
+
+  /* Type */
+  --font-display: "Zilla Slab", "Roboto Slab", Georgia, serif;
+  --font-body: "Inter", "Source Sans 3", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", "Courier New", monospace;
+
+  /* Spacing scale — 4px base. Replaces the ad-hoc 18/22/24/28/44 mix. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* Layered shadows read as real depth; a single blur reads as a smudge. */
+  --shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.30),
+    0 4px 14px rgba(0, 0, 0, 0.26);
+  --shadow-raised:
+    0 2px 4px rgba(0, 0, 0, 0.32),
+    0 12px 32px rgba(0, 0, 0, 0.38);
+  --shadow-brass: 0 0 0 1px var(--border-brass), 0 8px 28px rgba(212, 160, 23, 0.12);
+
+  --ease: cubic-bezier(0.32, 0.72, 0.28, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* --------------------------------------------------------------------------
+   2. Page shell
+   -------------------------------------------------------------------------- */
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--paper-cream);
+  background:
+    radial-gradient(ellipse 1100px 620px at 12% -12%, rgba(212, 160, 23, 0.075), transparent 62%),
+    radial-gradient(ellipse 820px 560px at 104% 14%, rgba(193, 68, 14, 0.065), transparent 60%),
+    linear-gradient(180deg, var(--surface-1) 0%, var(--surface-0) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Paper grain. Very faint — it stops large dark panels from looking like flat
+   fills, which is most of what separates a "themed" page from a designed one. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+body > * { position: relative; z-index: 1; }
+
+::selection { background: var(--brass); color: var(--surface-0); }
+
+/* One accessible focus treatment for everything. :focus-visible so it appears
+   for keyboard users without flashing on every mouse click. */
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* --------------------------------------------------------------------------
+   3. Typography
+   -------------------------------------------------------------------------- */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--paper-cream);
+  margin-top: 0;
+  line-height: 1.18;
+  letter-spacing: -0.015em;
+}
+
+h1 {
+  font-size: clamp(1.95rem, 1.45rem + 2.1vw, 2.7rem);
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+  letter-spacing: -0.025em;
+}
+h2 { font-size: clamp(1.35rem, 1.2rem + 0.7vw, 1.65rem); font-weight: 600; margin-bottom: var(--space-3); }
+h3 { font-size: 1.12rem; font-weight: 600; margin-bottom: var(--space-4); }
+
+p { margin: 0 0 var(--space-4); }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--brass); transition: color 0.15s var(--ease); }
+a:hover { color: var(--brass-bright); }
+
+strong { font-weight: 600; color: var(--paper-cream); }
+em { color: var(--paper-dim); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  color: var(--paper-dim);
+  word-break: break-all;
+}
+
+/* The brass index tab above every page title. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: var(--space-3);
+}
+.eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.section-lead {
+  color: var(--slate);
+  font-size: 1.04rem;
+  line-height: 1.7;
+  margin-bottom: var(--space-8);
+  max-width: 62ch;
+}
+
+.section-heading { margin: var(--space-12) 0 var(--space-6); }
+.text-muted { color: var(--slate); }
+
+/* --------------------------------------------------------------------------
+   4. Navbar
+   -------------------------------------------------------------------------- */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-8);
+  background: rgba(27, 36, 48, 0.82);
+  backdrop-filter: saturate(150%) blur(14px);
+  -webkit-backdrop-filter: saturate(150%) blur(14px);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Hairline of brass under the bar — the "file tab" cue, kept to 1px. */
+.navbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-brass) 22%, var(--border-brass) 78%, transparent);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.16rem;
+  letter-spacing: -0.015em;
+  color: var(--paper-cream);
+  text-decoration: none;
+  transition: opacity 0.15s var(--ease);
+}
+.navbar-brand:hover { color: var(--paper-cream); opacity: 0.86; }
+
+/* The seal: a wax-stamp disc holding the shield mark. */
+.navbar-brand .seal {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, var(--seal-red-bright), var(--seal-red) 58%, #8E3109 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.28),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.32),
+    0 2px 8px rgba(193, 68, 14, 0.34);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--paper-cream);
+}
+.navbar-brand .seal svg { width: 17px; height: 17px; }
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-links a,
+.navbar-links .btn-login {
+  display: inline-block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--slate);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.navbar-links a:hover { color: var(--paper-cream); background: rgba(245, 241, 232, 0.05); }
+
+/* Active page gets a brass underline rather than just a colour change —
+   colour alone is easy to miss at 0.9rem. */
+.navbar-links a.active {
+  color: var(--brass);
+  position: relative;
+}
+.navbar-links a.active::after {
+  content: '';
+  position: absolute;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: 2px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: var(--brass);
+}
+
+.navbar-form { margin: 0; display: flex; }
+
+/* .btn-login is an <a> for "Log in" and a <button> for "Log out" — the reset
+   keeps both identical. */
+.navbar-links .btn-login {
+  margin-left: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid var(--border-brass);
+  background: none;
+  color: var(--brass) !important;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.navbar-links .btn-login:hover {
+  background: var(--brass);
+  color: var(--surface-0) !important;
+  border-color: var(--brass);
+}
+
+.navbar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--paper-cream);
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  line-height: 0;
+}
+.navbar-toggle svg { width: 22px; height: 22px; }
+
+/* --------------------------------------------------------------------------
+   5. Layout
+   -------------------------------------------------------------------------- */
+.page-container {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6) var(--space-16);
+}
+
+/* --------------------------------------------------------------------------
+   6. Cards
+   -------------------------------------------------------------------------- */
+.card {
+  position: relative;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-5);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform 0.22s var(--ease),
+    box-shadow 0.22s var(--ease),
+    border-color 0.22s var(--ease);
+}
+
+/* Top-edge highlight — mimics light catching a raised surface. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(90deg, transparent, rgba(245, 241, 232, 0.12) 50%, transparent);
+  pointer-events: none;
+}
+
+a .card:hover, .card.hoverable:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-raised);
+  border-color: var(--border-brass);
+}
+
+/* The one card that carries the answer. Everything else is supporting. */
+.card-feature {
+  background:
+    linear-gradient(145deg, rgba(212, 160, 23, 0.05), transparent 46%),
+    var(--surface-2);
+  border-color: var(--border-brass);
+  box-shadow: var(--shadow-raised);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.card-header h3 { margin: 0; }
+
+/* Icon chip beside a card title.
+   Neutral by default. These used to be brass, which put four to six brass
+   chips on a page alongside the brass eyebrow, brass links and brass active
+   nav item - at which point brass stopped signalling anything. Colour here is
+   now opt-in via .is-green / .is-red, for icons that carry real meaning. */
+.card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  color: var(--slate);
+}
+.card-icon svg { width: 17px; height: 17px; }
+.card-icon.is-green { background: var(--green-dim); color: var(--green-bright); }
+.card-icon.is-red { background: var(--seal-red-dim); color: var(--seal-red-bright); }
+
+/* Qualifier inside a card title, e.g. "URL Scan · VirusTotal". */
+.card-header-note {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--slate-dark);
+  margin-left: var(--space-2);
+  vertical-align: 1px;
+}
+
+.card-actions {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Closing statement card — quieter than a feature card, warmer than a plain one. */
+.card-quote {
+  background:
+    linear-gradient(145deg, rgba(212, 160, 23, 0.055), transparent 52%),
+    var(--surface-2);
+  border-color: rgba(212, 160, 23, 0.18);
+}
+
+/* --------------------------------------------------------------------------
+   7. Forms
+   -------------------------------------------------------------------------- */
+textarea,
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-default);
+  background: var(--surface-0);
+  color: var(--paper-cream);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+textarea::placeholder, input::placeholder { color: var(--slate-dark); }
+
+textarea:hover,
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="password"]:hover { border-color: rgba(245, 241, 232, 0.2); }
+
+textarea:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px var(--brass-dim);
+}
+
+label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  font-size: 0.9rem;
+  color: var(--slate);
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brass);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Option row and submit share a baseline instead of stacking with loose margins. */
+.form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+.form-footer label { margin: 0; }
+
+@media (max-width: 560px) {
+  .form-footer { flex-direction: column; align-items: stretch; }
+  .form-footer .btn { width: 100%; }
+}
+
+/* --------------------------------------------------------------------------
+   8. Buttons
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background: linear-gradient(180deg, var(--seal-red-bright) -18%, var(--seal-red) 52%, #A93A0B 100%);
+  color: var(--paper-cream);
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.94rem;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 2px 10px rgba(193, 68, 14, 0.26);
+  transition: filter 0.15s var(--ease), transform 0.12s var(--ease), box-shadow 0.15s var(--ease);
+}
+.btn:hover {
+  color: var(--paper-cream);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 6px 20px rgba(193, 68, 14, 0.34);
+}
+.btn:active { transform: translateY(0); filter: brightness(0.96); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; filter: none; }
+.btn svg { width: 16px; height: 16px; }
+
+.btn-secondary {
+  background: var(--surface-3);
+  border: 1px solid var(--border-default);
+  color: var(--paper-cream);
+  box-shadow: none;
+}
+.btn-secondary:hover {
+  background: var(--surface-4);
+  border-color: var(--border-brass);
+  filter: none;
+  box-shadow: none;
+}
+
+/* Destructive action. Deliberately an outline rather than a filled button: it
+   must be findable without competing with the primary action on the page. */
+.btn-danger {
+  background: transparent;
+  border: 1px solid rgba(255, 138, 92, 0.42);
+  color: var(--risk-high);
+  box-shadow: none;
+}
+.btn-danger:hover {
+  background: var(--risk-critical);
+  border-color: var(--risk-critical);
+  color: var(--paper-cream);
+  filter: none;
+  box-shadow: 0 4px 16px rgba(232, 81, 43, 0.32);
+}
+
+/* Destructive section. Rendered as a flat report section like the others, so
+   it needs no card chrome - the red icon and outline button carry the warning
+   without turning it into a box that competes with the verdict. */
+.danger-zone { border-top-color: rgba(255, 138, 92, 0.22); }
+.danger-zone form { margin-top: var(--space-4); }
+
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(245, 241, 232, 0.3);
+  border-top-color: var(--paper-cream);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.back-link { margin-bottom: var(--space-6); }
+
+/* --------------------------------------------------------------------------
+   9. Alerts
+   -------------------------------------------------------------------------- */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-5);
+  font-size: 0.92rem;
+  border-left-width: 3px;
+  border-left-style: solid;
+}
+.alert svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 3px; }
+
+.alert-error {
+  background: var(--seal-red-dim);
+  border: 1px solid rgba(193, 68, 14, 0.4);
+  border-left: 3px solid var(--seal-red);
+  color: #FFB89A;
+}
+.alert-success {
+  background: var(--green-dim);
+  border: 1px solid rgba(59, 122, 87, 0.4);
+  border-left: 3px solid var(--safe-green);
+  color: #A8D9BB;
+}
+
+/* --------------------------------------------------------------------------
+   10. Badges, tags, metrics
+   -------------------------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+/* A dot carries the severity even where the colour is hard to distinguish. */
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.risk-low { background: rgba(91, 196, 137, 0.14); color: var(--risk-low); border-color: rgba(91, 196, 137, 0.3); }
+.risk-moderate { background: rgba(240, 192, 64, 0.14); color: var(--risk-moderate); border-color: rgba(240, 192, 64, 0.32); }
+.risk-high { background: rgba(255, 138, 92, 0.14); color: var(--risk-high); border-color: rgba(255, 138, 92, 0.34); }
+.risk-critical {
+  background: linear-gradient(180deg, #F0603C, var(--risk-critical));
+  color: #FFF1E8;
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 12px rgba(232, 81, 43, 0.38);
+}
+
+.badge-lg {
+  padding: var(--space-2) var(--space-5);
+  font-size: 0.86rem;
+  letter-spacing: 0.07em;
+}
+.badge-lg::before { width: 7px; height: 7px; }
+
+.tag {
+  display: inline-block;
+  margin: 3px 4px 3px 0;
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  color: var(--paper-dim);
+}
+
+.metric {
+  font-family: var(--font-mono);
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--paper-cream);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* --------------------------------------------------------------------------
+   11. Verdict block
+   -------------------------------------------------------------------------- */
+/* The verdict card is the answer to the user's question — it gets an accent
+   rail down its left edge so it reads as the primary result, not one card
+   among six. */
+.verdict-card { overflow: hidden; }
+.verdict-card::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--brass), transparent);
+  pointer-events: none;
+}
+
+.verdict-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* Stamped verdict disc — the case-file "seal" applied to the outcome. */
+.verdict-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  box-shadow: inset 0 0 0 4px rgba(245, 241, 232, 0.035);
+}
+.verdict-seal svg { width: 24px; height: 24px; }
+.verdict-seal.is-red { color: var(--seal-red-bright); background: var(--seal-red-dim); }
+.verdict-seal.is-green { color: var(--green-bright); background: var(--green-dim); }
+
+.verdict-headline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.verdict-classification {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 1.15rem + 0.7vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.technique-tags { margin-top: var(--space-2); }
+
+.verdict-stats {
+  display: flex;
+  gap: var(--space-10);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.gauge-stat { text-align: center; }
+
+/* Animating a conic-gradient needs the custom property registered as an
+   <angle>/<number>; browsers without @property just render the final value. */
+@property --pct {
+  syntax: '<number>';
+  initial-value: 0;
+  inherits: false;
+}
+
+.gauge {
+  --pct: 0;
+  --gauge-color: var(--brass);
+  position: relative;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-3);
+  background:
+    conic-gradient(
+      var(--gauge-color) calc(var(--pct) * 3.6deg),
+      rgba(245, 241, 232, 0.07) 0
+    );
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.3));
+  animation: gaugeFill 1.1s var(--ease);
+}
+
+/* No fill-mode on purpose. Where @property is unsupported, custom properties
+   animate discretely — with forwards/both the ring could stick at 0%. Without
+   it the element always settles back on its own inline --pct. */
+@keyframes gaugeFill { from { --pct: 0; } }
+
+/* Inner disc, punched out to leave the ring. */
+.gauge::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Faint tick ring — reads as an instrument rather than a pie slice. */
+.gauge::after {
+  content: '';
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    rgba(245, 241, 232, 0.14) 0deg 1deg,
+    transparent 1deg 15deg
+  );
+  -webkit-mask: radial-gradient(circle, transparent 60%, #000 61%);
+  mask: radial-gradient(circle, transparent 60%, #000 61%);
+  pointer-events: none;
+}
+
+.gauge-value {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  color: var(--paper-cream);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   11b. Report sections
+   --------------------------------------------------------------------------
+   Supporting detail below the verdict. These sit flat on the page rather than
+   in raised cards: the verdict is the answer, and when every block is an
+   equally elevated card the answer has no more weight than the URL list under
+   it. Hairline rules separate them instead of shadows.
+   -------------------------------------------------------------------------- */
+.report { margin-top: var(--space-10); }
+
+.report-section {
+  padding: var(--space-8) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.report-section:first-child { border-top: none; padding-top: 0; }
+.report-section:last-child { padding-bottom: 0; }
+
+.report-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.report-header h2 {
+  margin: 0;
+  font-size: 1.14rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.report-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--slate);
+}
+.report-icon svg { width: 16px; height: 16px; }
+.report-icon.is-green { color: var(--risk-low); border-color: rgba(91, 196, 137, 0.3); }
+.report-icon.is-red { color: var(--risk-high); border-color: rgba(255, 138, 92, 0.3); }
+
+.report-note {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--slate-dark);
+  margin-left: var(--space-2);
+  vertical-align: 1px;
+}
+
+/* Structural red flags. Each one is a concrete, checkable statement about the
+   email, so they get a numbered rail rather than bullets - this is evidence,
+   not a list of suggestions. */
+.signal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: signal;
+}
+.signal-list li {
+  position: relative;
+  padding: var(--space-3) 0 var(--space-3) var(--space-8);
+  border-bottom: 1px solid var(--border-subtle);
+  line-height: 1.6;
+}
+.signal-list li:last-child { border-bottom: none; }
+.signal-list li::before {
+  counter-increment: signal;
+  content: counter(signal, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--risk-high);
+}
+
+/* Known-good domain readout. Reported alongside the model, never fed into it. */
+.signal-trust {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  color: var(--slate);
+  font-size: 0.9rem;
+}
+.signal-trust svg { width: 17px; height: 17px; flex-shrink: 0; }
+.signal-trust.is-trusted { color: var(--risk-low); border-color: rgba(91, 196, 137, 0.28); }
+
+/* Collapsed "what the model read" panel. */
+.model-input summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  color: var(--slate);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  list-style: none;
+  user-select: none;
+  transition: color 0.15s var(--ease);
+}
+.model-input summary::-webkit-details-marker { display: none; }
+.model-input summary:hover { color: var(--brass); }
+.model-input summary svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.2s var(--ease);
+}
+.model-input[open] summary svg { transform: rotate(90deg); }
+
+.model-input-note {
+  margin: var(--space-4) 0 var(--space-3);
+  color: var(--slate);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.model-input-tokens {
+  display: block;
+  padding: var(--space-4);
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  color: var(--paper-dim);
+  font-size: 0.82rem;
+  line-height: 1.8;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------------------
+   Extension token
+   -------------------------------------------------------------------------- */
+.token-reveal {
+  margin: var(--space-5) 0;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius);
+  background: var(--surface-0);
+  border: 1px solid var(--border-brass);
+}
+.token-reveal .label { margin-bottom: var(--space-2); color: var(--brass); }
+
+.token-value {
+  display: block;
+  padding: var(--space-3);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--paper-cream);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  user-select: all;   /* one click selects the whole token */
+}
+
+.token-note {
+  margin: var(--space-3) 0 0;
+  color: var(--slate);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.token-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-5) 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  color: var(--slate);
+  font-size: 0.9rem;
+}
+.token-status svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+.token-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.token-actions form { margin: 0; }
+
+/* Technique name paired with the words that matched it. */
+.technique-list { margin: 0; }
+.technique-list dt {
+  font-weight: 600;
+  color: var(--paper-cream);
+  margin-bottom: var(--space-2);
+}
+.technique-list dd {
+  margin: 0 0 var(--space-5);
+  line-height: 2.1;
+}
+.technique-list dd:last-child { margin-bottom: 0; }
+
+/* --------------------------------------------------------------------------
+   12. Techniques, tips, checklist, URLs
+   -------------------------------------------------------------------------- */
+.technique-block {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.technique-block:last-child { border-bottom: none; padding-bottom: 0; }
+.technique-block:first-of-type { padding-top: 0; }
+
+.tip-box {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-0);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--brass);
+}
+.tip-box:last-child { margin-bottom: 0; }
+
+.tip-title {
+  color: var(--brass);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.tip-warning { margin: var(--space-2) 0 var(--space-1); }
+.tip-advice { margin: var(--space-1) 0 0; color: var(--slate); font-size: 0.94rem; }
+
+.checklist { list-style: none; padding-left: 0; margin: 0; }
+.checklist li {
+  position: relative;
+  padding: var(--space-2) 0 var(--space-2) var(--space-8);
+  line-height: 1.6;
+}
+.checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(91, 196, 137, 0.14);
+  border: 1px solid rgba(91, 196, 137, 0.35);
+}
+.checklist li::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 15px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--risk-low);
+  border-width: 0 1.8px 1.8px 0;
+  transform: rotate(45deg);
+}
+
+.url-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.93rem;
+}
+.url-row:last-child { border-bottom: none; padding-bottom: 0; }
+.url-row:first-child { padding-top: 0; }
+.url-row svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 3px; }
+.url-row-body { min-width: 0; flex: 1; }
+/* Same scale as the risk badges, so a "Suspicious" link and a "Moderate Risk"
+   verdict read as the same level of concern. */
+.url-status-malicious { color: var(--risk-critical); }
+.url-status-suspicious { color: var(--risk-moderate); }
+.url-status-clean { color: var(--risk-low); }
+.url-status-error { color: var(--slate); }
+
+/* --------------------------------------------------------------------------
+   13. Grids
+   -------------------------------------------------------------------------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-10);
+}
+
+.stat-grid .card, .feature-grid .card { margin-bottom: 0; }
+
+/* Step icon on the "how it works" cards. Neutral for the same reason as
+   .card-icon; the brass step number above it carries the accent. */
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--surface-3);
+  border: 1px solid var(--border-subtle);
+  color: var(--slate);
+}
+.feature-icon svg { width: 19px; height: 19px; }
+
+.feature-step {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--brass);
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+.feature-title { display: block; font-weight: 600; margin-bottom: var(--space-2); }
+.feature-body { color: var(--slate); font-size: 0.88rem; margin: 0; line-height: 1.6; }
+
+.empty-state {
+  padding: var(--space-8) var(--space-4);
+  color: var(--slate);
+  text-align: center;
+}
+
+/* Landing page intake block — contains the scan-line sweep. */
+.intake-head { position: relative; overflow: hidden; }
+
+/* Ordered/description lists used on the About page. */
+.step-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  counter-reset: step;
+  list-style: none;
+}
+.step-list li {
+  position: relative;
+  padding: var(--space-2) 0 var(--space-2) var(--space-6);
+  line-height: 1.6;
+}
+.step-list li::before {
+  counter-increment: step;
+  content: counter(step, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 11px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--brass);
+}
+
+.stack-list { list-style: none; margin: 0; padding: 0; }
+.stack-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.94rem;
+}
+.stack-list li:last-child { border-bottom: none; padding-bottom: 0; }
+.stack-list li:first-child { padding-top: 0; }
+.stack-list strong { min-width: 96px; }
+
+/* --------------------------------------------------------------------------
+   13b. Dashboard
+   -------------------------------------------------------------------------- */
+.stat-card { padding: var(--space-5); }
+.stat-card .label { margin-bottom: var(--space-2); display: block; }
+
+.metric-danger { color: var(--risk-high); }
+.metric-unit { font-size: 1rem; color: var(--slate); margin-left: 1px; }
+.metric-word {
+  font-family: var(--font-display);
+  font-size: 1.24rem;
+  letter-spacing: -0.01em;
+}
+
+.chart-wrap { position: relative; height: 230px; }
+
+.section-actions { margin-top: var(--space-5); }
+
+/* First-run panel. Given the feature-card treatment because on an empty
+   dashboard it is the only thing on the page worth looking at. */
+.onboarding { text-align: center; padding: var(--space-10) var(--space-6); }
+.onboarding h2 { margin-bottom: var(--space-3); }
+.onboarding-body {
+  color: var(--slate);
+  max-width: 46ch;
+  margin: 0 auto var(--space-6);
+  line-height: 1.7;
+}
+.onboarding-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--space-4);
+  border-radius: 50%;
+  background: var(--surface-3);
+  border: 1px solid var(--border-subtle);
+  color: var(--brass);
+}
+.onboarding-icon svg { width: 24px; height: 24px; }
+
+.recent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-2);
+  margin: 0 calc(var(--space-2) * -1);
+  border-radius: var(--radius-sm);
+  border-bottom: 1px solid var(--border-subtle);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s var(--ease);
+}
+.recent-row:last-of-type { border-bottom: none; }
+.recent-row:hover { background: rgba(245, 241, 232, 0.04); color: inherit; }
+.recent-row-date {
+  color: var(--slate);
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+}
+
+/* --------------------------------------------------------------------------
+   14. History
+   -------------------------------------------------------------------------- */
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  text-decoration: none;
+  color: inherit;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5) var(--space-4) 0;
+  margin-bottom: var(--space-3);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition:
+    transform 0.22s var(--ease),
+    box-shadow 0.22s var(--ease),
+    border-color 0.22s var(--ease);
+}
+.history-row:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-raised);
+  border-color: var(--border-brass);
+  color: inherit;
+}
+.history-row:hover .history-row-arrow { color: var(--brass); transform: translateX(3px); }
+
+.history-row-accent {
+  align-self: stretch;
+  width: 4px;
+  flex-shrink: 0;
+  border-radius: 0 2px 2px 0;
+}
+.history-row-body { flex: 1; min-width: 0; }
+.history-row-snippet {
+  margin: var(--space-1) 0 0;
+  color: var(--paper-dim);
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-row-arrow {
+  color: var(--slate-dark);
+  flex-shrink: 0;
+  line-height: 0;
+  transition: color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.history-row-arrow svg { width: 17px; height: 17px; }
+
+/* --------------------------------------------------------------------------
+   15. Pagination
+   -------------------------------------------------------------------------- */
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+.pagination-info { color: var(--slate); font-size: 0.82rem; }
+.pagination-links { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  color: var(--slate);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  transition: border-color 0.15s var(--ease), color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.pagination-btn:hover { border-color: var(--border-brass); color: var(--brass); background: var(--brass-dim); }
+.pagination-current {
+  background: var(--brass);
+  color: var(--surface-0);
+  border-color: var(--brass);
+  font-weight: 700;
+}
+.pagination-current:hover { background: var(--brass); color: var(--surface-0); }
+.pagination-disabled { opacity: 0.32; pointer-events: none; }
+.pagination-dots { color: var(--slate-dark); padding: 0 var(--space-1); }
+
+/* --------------------------------------------------------------------------
+   16. Auth screens
+   -------------------------------------------------------------------------- */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-5);
+  gap: var(--space-6);
+}
+
+.auth-brand { font-size: 1.35rem; }
+.auth-card { width: 100%; max-width: 430px; margin-bottom: 0; padding: var(--space-8); }
+.auth-subtitle { color: var(--slate); font-size: 0.92rem; margin: 0 0 var(--space-6); }
+
+.auth-field + .auth-field { margin-top: var(--space-4); }
+.auth-field label { margin: 0 0 var(--space-2); font-size: 0.86rem; color: var(--paper-dim); }
+.auth-field .alert { margin: var(--space-2) 0 0; padding: var(--space-2) var(--space-3); font-size: 0.82rem; }
+
+.auth-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.auth-link { color: var(--slate); font-size: 0.85rem; text-decoration: none; border-bottom: 1px solid transparent; }
+.auth-link:hover { color: var(--brass); border-bottom-color: var(--border-brass); }
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-6) 0;
+  color: var(--slate-dark);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: #111827;
+  background: var(--paper-cream);
+  font-weight: 600;
+  font-size: 0.92rem;
+  font-family: var(--font-body);
+  transition: transform 0.12s var(--ease), box-shadow 0.15s var(--ease);
+}
+.btn-google:hover { color: #111827; transform: translateY(-1px); box-shadow: var(--shadow-raised); }
+
+.auth-footnote { text-align: center; margin: 0; }
+.auth-footnote a { color: var(--slate); font-size: 0.85rem; text-decoration: none; }
+.auth-footnote a:hover { color: var(--brass); }
+.auth-back { display: inline-flex; align-items: center; gap: var(--space-2); }
+.auth-back svg { width: 14px; height: 14px; }
+
+/* --------------------------------------------------------------------------
+   16b. Error pages
+   -------------------------------------------------------------------------- */
+.error-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-5);
+  gap: var(--space-6);
+}
+
+.error-card {
+  max-width: 480px;
+  text-align: center;
+  padding-top: var(--space-10);
+}
+
+/* Oversized status number, set back as a watermark rather than a headline —
+   the sentence explaining what happened is what the reader actually needs. */
+.error-code {
+  font-family: var(--font-display);
+  font-size: 4.6rem;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(212, 160, 23, 0.4);
+  margin-bottom: var(--space-3);
+  user-select: none;
+}
+
+/* Rubber-stamped case marking, tilted like the real thing. */
+.error-stamp {
+  display: inline-block;
+  padding: var(--space-1) var(--space-4);
+  margin-bottom: var(--space-5);
+  border: 1.5px solid var(--seal-red-bright);
+  border-radius: var(--radius-sm);
+  color: var(--seal-red-bright);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transform: rotate(-3deg);
+  opacity: 0.85;
+}
+
+.error-title {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-3);
+}
+
+.error-message {
+  color: var(--slate);
+  font-size: 0.96rem;
+  line-height: 1.7;
+  margin-bottom: var(--space-6);
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+@media (max-width: 480px) {
+  .error-code { font-size: 3.4rem; }
+  .error-actions { flex-direction: column; }
+  .error-actions .btn { width: 100%; }
+}
+
+/* --------------------------------------------------------------------------
+   17. Footer
+   -------------------------------------------------------------------------- */
+.footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  color: var(--slate-dark);
+  font-size: 0.82rem;
+  line-height: 1.8;
+}
+.footer a { color: var(--slate); text-decoration: none; }
+.footer a:hover { color: var(--brass); }
+.footer-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--slate);
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+.footer-mark svg { width: 15px; height: 15px; color: var(--brass); }
+
+/* --------------------------------------------------------------------------
+   18. Scan-line signature
+   -------------------------------------------------------------------------- */
+@keyframes scanSweep {
+  0% { transform: translateY(-100%); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateY(2400%); opacity: 0; }
+}
+
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, var(--brass), transparent);
+  box-shadow: 0 0 12px rgba(212, 160, 23, 0.5);
+  animation: scanSweep 1.9s var(--ease);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   19. Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 720px) {
+  .navbar { padding: var(--space-3) var(--space-5); flex-wrap: wrap; }
+  .navbar-toggle { display: block; }
+  .navbar-links {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+    width: 100%;
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .navbar-links.open { display: flex; }
+  .navbar-links a.active::after { display: none; }
+  .navbar-links .btn-login { margin-left: 0; text-align: center; }
+
+  .page-container { padding: var(--space-8) var(--space-4) var(--space-12); }
+  .card { padding: var(--space-5); }
+  .auth-card { padding: var(--space-6); }
+  .verdict-stats { gap: var(--space-6); }
+  .gauge { width: 92px; height: 92px; }
+}
+
+@media (max-width: 420px) {
+  .verdict-stats { gap: var(--space-5); }
+  .gauge { width: 84px; height: 84px; }
+  .gauge::before { inset: 8px; }
+}
+
+/* --------------------------------------------------------------------------
+   20. Motion preferences
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .scan-line { display: none; }
+  .card:hover, .history-row:hover, .btn:hover { transform: none; }
+}
+
+/* --------------------------------------------------------------------------
+   21. Print — a case file should print like one
+   -------------------------------------------------------------------------- */
+@media print {
+  body { background: #fff; color: #000; }
+  body::before, .navbar, .footer, .back-link, .scan-line,
+  .danger-zone, .section-actions { display: none !important; }
+  .card, .history-row {
+    background: #fff;
+    border: 1px solid #ccc;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  .report-section {
+    break-inside: avoid;
+    border-top-color: #ccc;
+    padding: 18px 0;
+  }
+  .report-icon { border-color: #ccc; color: #444; }
+  h1, h2, h3, .verdict-classification, .metric, .gauge-value,
+  .technique-list dt, strong { color: #000; }
+  .text-muted, .label, .section-lead, .tip-advice, .report-note { color: #444; }
+  .page-container { max-width: none; padding: 0; }
+}

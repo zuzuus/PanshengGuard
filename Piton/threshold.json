@@ -1,0 +1,22 @@
+{
+  "threshold": 0.5,
+  "dataset": "malaysia_phishing_dataset_final.csv",
+  "n_text_features": 2716,
+  "feature_order": [
+    "link_has_ip",
+    "link_is_shortener",
+    "link_suspicious_tld",
+    "link_num_hyphens",
+    "link_subdomain_depth",
+    "link_domain_length",
+    "link_uses_https",
+    "link_brand_typosquat",
+    "sender_link_mismatch",
+    "has_urgency",
+    "has_threat",
+    "asks_credentials",
+    "has_reward_money",
+    "has_deadline",
+    "generic_greeting"
+  ]
+}

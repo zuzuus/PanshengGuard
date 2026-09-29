@@ -1,0 +1,10 @@
+model,f1_clean,f1_attacked,f1_defended,lost_to_attack,regained_by_defence
+Logistic Regression,1.0000,0.7190,0.9519,-0.2810,0.2329
+Linear SVM,1.0000,0.7355,0.9111,-0.2645,0.1756
+Multinomial NB,1.0000,1.0000,1.0000,0.0000,0.0000
+Random Forest,1.0000,0.9897,1.0000,-0.0103,0.0103
+Decision Tree,1.0000,0.9738,1.0000,-0.0262,0.0262
+
+spread_clean,0.0000
+spread_attacked,0.2810
+generated,20260923-002107

@@ -1,0 +1,14 @@
+model,accuracy,precision,recall,f1,roc_auc
+Logistic Regression,1.0000,1.0000,1.0000,1.0000,1.0000
+Linear SVM,1.0000,1.0000,1.0000,1.0000,1.0000
+Multinomial NB,1.0000,1.0000,1.0000,1.0000,1.0000
+Random Forest,1.0000,1.0000,1.0000,1.0000,1.0000
+Decision Tree,1.0000,1.0000,1.0000,1.0000,1.0000
+Majority baseline,0.4317,0.4317,1.0000,0.6031,0.5000
+
+split,"grouped by template, whole templates held out"
+test_size,0.25
+seed,42
+rows,1042
+templates,383
+generated,20260923-001913

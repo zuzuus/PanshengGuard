@@ -1,0 +1,161 @@
+Test Email
+1.
+From: Maybank2u Security <noreply@maybank2u-secure-verify.com>
+Subject: Action Required: Your Maybank2u Account Has Been Temporarily Locked
+Date: 14 Jan 2026
+
+Dear Valued Customer,
+
+We have detected unusual login activity on your Maybank2u account
+(Ref: 8823KLP2). For your security, account access has been temporarily
+suspended.
+
+To restore full access, you must verify your identity within 24 hours by
+clicking the link below:
+
+https://maybank2u-secure-verify.com/login?ref=8823KLP2
+
+You will be asked to confirm your Username, Password and TAC to complete
+verification. Failure to verify will result in permanent account closure.
+
+Thank you,
+Maybank2u Security Team
+
+2.
+From: Pos Laju <noreply@poslaju-parcel-mytrack.com>
+Subject: Pos Laju: Your Parcel MY418209571MY Is On Hold - Pay Custom Duty
+Date: 3 Feb 2026
+
+Dear Customer,
+
+Your parcel MY418209571MY is currently being held at customs and cannot be
+delivered until an outstanding customs duty of RM3.50 is settled.
+
+Pay now to release your item:
+https://poslaju-parcel-mytrack.com/pay
+
+If payment is not received within 48 hours, the parcel will be returned to
+the sender.
+
+Pos Laju Customer Service
+
+3.
+From: Touch 'n Go eWallet <noreply@tng-ewallet-reward.net>
+Subject: Touch 'n Go: You've Received RM128.90 - Claim Before It Expires
+Date: 20 Feb 2026
+
+Hi there,
+
+Congratulations! You've received RM128.90 in your Touch 'n Go eWallet as part
+of our loyalty cashback reward programme.
+
+Claim it now before it expires tonight:
+https://tng-ewallet-reward.net/claim
+
+Log in with your registered phone number and 6-digit PIN to credit the amount
+to your wallet instantly.
+
+Touch 'n Go Rewards Team
+
+4.
+From: LHDN Malaysia <noreply@lhdn-refund-semakan.com>
+Subject: LHDN: Anda Layak Menerima Bayaran Balik Cukai (Tax Refund) RM940.00
+Date: 5 Mar 2026
+
+Tuan/Puan,
+
+Semakan sistem LHDN mendapati anda layak menerima bayaran balik cukai
+sebanyak RM940.00.
+
+Untuk menuntut bayaran ini, sila kemas kini maklumat perbankan anda di:
+https://lhdn-refund-semakan.com/claim
+
+Tuntutan mesti dibuat dalam tempoh 72 jam. Rujukan: RF20260305.
+
+Lembaga Hasil Dalam Negeri Malaysia
+
+5.
+From: Netflix <noreply@netflix-billing-update.net>
+Subject: Netflix: We Couldn't Process Your Payment
+Date: 11 Mar 2026
+
+Hi,
+
+We're having some trouble with your current billing information. To keep your
+membership active, please update your payment details at your earliest
+convenience.
+
+Update payment method:
+https://netflix-billing-update.net/account
+
+If we're unable to validate your billing information, your membership may be
+suspended.
+
+The Netflix Team
+
+6.
+From: MyInvois <noreply@myinvois-hasil-validate.com>
+Subject: Your e-Invoice Is Ready for Validation - MyInvois
+Date: 18 Mar 2026
+
+Dear Taxpayer,
+
+Your e-Invoice for the current period has been generated and is ready for
+validation under the MyInvois system. Please review and confirm your
+submission at your convenience:
+
+https://myinvois-hasil-validate.com/login
+
+Sign in with your MyTax ID to view the document.
+
+Lembaga Hasil Dalam Negeri Malaysia
+
+7.
+From: Maybank2u <noreply@maybank2u.com.my>
+Subject: Your Maybank2u e-Statement for Feb 2026 Is Ready
+Date: 2 Mar 2026
+
+Dear Ahmad Faizal,
+
+Your Maybank2u e-statement for February 2026 is now available. Log in to your
+account at https://www.maybank2u.com.my to view or download it. No action is
+required.
+
+For your security, Maybank will never ask for your password or TAC via email.
+
+Maybank2u
+
+8.
+From: GMI Academic Office <noreply@portal.gmi.edu.my>
+Subject: Reminder: FYP Progress Report Submission Deadline
+Date: 10 Mar 2026
+
+Dear Muhamad Amirul,
+
+This is a reminder that your FYP progress report is due this Friday via the
+student portal at https://portal.gmi.edu.my.
+
+Please ensure all documents are submitted on time. Kindly contact the
+Academic Office if you have any questions.
+
+German-Malaysian Institute, Academic Office
+
+9.
+From: Maybank2u <m2u@maybank2u-secure-notification.com>
+Subject: You've received money — verify this transaction to release your funds
+Date: 3 Sep 2026, 9:53 AM
+
+Hi MUHAMAD AMIRUL HAZIQ BIN MOHAMAD AZLI,
+
+You have received RM 16.16 in your account ***2222 on 03 Sep 2026 09:53:48.
+
+For your security, this incoming transfer is currently being held and requires
+verification before it can be credited to your account. Please confirm the
+transaction within 12 hours to release the funds:
+
+https://maybank2u-secure-notification.com/verify?txn=2222
+
+Log in with your Maybank2u Username, Password and SMS TAC to confirm.
+Unverified transfers will be reversed automatically.
+
+Maybank2u

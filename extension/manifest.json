@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "PanshengGuard",
+  "version": "1.0.0",
+  "description": "Check the email you are reading in Gmail against the PanshengGuard phishing detector, without copying it anywhere.",
+
+  "permissions": ["storage"],
+
+  "host_permissions": [
+    "http://127.0.0.1:8001/*",
+    "http://localhost:8001/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PanshengGuard"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

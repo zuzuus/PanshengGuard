@@ -1,0 +1,15 @@
+Nak RUN FYP 
+
+Kat File Piton
+python -m uvicorn main:app --reload --port 8000
+
+Kat Laravel 
+php artisan serve --port=8001
+
+Nak Attack Data(Kat Piton)
+attack.py
+
+
+python clean_features.py      # kalau dataset berubah
+python train.py               # tulis model.pkl + vectorizer.pkl + scaler.pkl
+Ctrl+C, start semula uvicorn  # ni yang senang terlupa

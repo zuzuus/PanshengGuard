@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PanshengGuard</title>
+  <style>
+    :root {
+      --navy: #1B2430;
+      --navy-light: #222D3B;
+      --cream: #F5F1E8;
+      --slate: #939CAD;
+      --brass: #D4A017;
+      --red: #C1440E;
+      --green: #5BC489;
+    }
+    * { box-sizing: border-box; }
+    body {
+      width: 360px;
+      margin: 0;
+      padding: 16px;
+      background: var(--navy);
+      color: var(--cream);
+      font: 400 13px/1.55 Inter, Roboto, Arial, sans-serif;
+    }
+    h1 { margin: 0 0 4px; font-size: 15px; letter-spacing: -0.01em; }
+    .sub { margin: 0 0 16px; color: var(--slate); font-size: 12px; }
+
+    label { display: block; margin: 12px 0 4px; color: var(--slate); font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.08em; }
+    input, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid rgba(245,241,232,0.13);
+      border-radius: 6px;
+      background: #12181F;
+      color: var(--cream);
+      font: 400 12px/1.5 ui-monospace, Consolas, monospace;
+      resize: vertical;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--brass); }
+
+    .row { display: flex; gap: 8px; margin-top: 12px; }
+    button {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      background: var(--red);
+      color: var(--cream);
+      font: 600 12px/1.4 Inter, Roboto, Arial, sans-serif;
+      cursor: pointer;
+    }
+    button.ghost { background: transparent; border: 1px solid rgba(245,241,232,0.2); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .status { margin-top: 12px; padding: 8px 10px; border-radius: 6px;
+              background: #12181F; border: 1px solid rgba(245,241,232,0.08);
+              color: var(--slate); font-size: 12px; min-height: 34px; }
+    .status.ok  { color: var(--green); border-color: rgba(91,196,137,0.3); }
+    .status.bad { color: #FF9A6B; border-color: rgba(255,138,92,0.3); }
+
+    hr { margin: 18px 0 4px; border: none; border-top: 1px solid rgba(245,241,232,0.08); }
+    .hint { color: var(--slate); font-size: 11px; margin: 8px 0 0; }
+    .verdict { margin-top: 10px; padding: 10px; border-radius: 6px; background: #12181F;
+               border-left: 3px solid var(--slate); display: none; }
+    .verdict h2 { margin: 0 0 4px; font-size: 13px; }
+    .verdict ul { margin: 6px 0 0; padding-left: 18px; color: var(--slate); font-size: 12px; }
+    .verdict a { color: var(--brass); font-size: 12px; }
+  </style>
+</head>
+<body>
+
+  <h1>PanshengGuard</h1>
+  <p class="sub">Open an email in Gmail and use the scan button, or paste one below.</p>
+
+  <label for="apiBase">Server address</label>
+  <input id="apiBase" type="text" placeholder="http://127.0.0.1:8001" spellcheck="false">
+
+  <label for="token">API token</label>
+  <input id="token" type="password" placeholder="Paste from your profile page" spellcheck="false">
+
+  <div class="row">
+    <button id="save">Save</button>
+    <button id="test" class="ghost">Test connection</button>
+  </div>
+
+  <div id="status" class="status">Not connected yet.</div>
+
+  <hr>
+
+  <label for="paste">Paste an email instead</label>
+  <textarea id="paste" rows="4" placeholder="Subject and body…"></textarea>
+  <div class="row">
+    <button id="scan">Scan pasted text</button>
+  </div>
+  <p class="hint">Works even if Gmail's layout changes and the in-page button cannot attach.</p>
+
+  <div id="verdict" class="verdict"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

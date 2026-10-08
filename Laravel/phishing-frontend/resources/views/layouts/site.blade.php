@@ -3,100 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Phishing Detector')</title>
+    <title>@yield('title', 'PanshengGuard')</title>
+    <meta name="description" content="PanshengGuard analyses suspicious emails and explains the signals behind potential phishing threats.">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    @include('partials.theme-head')
 
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     @stack('styles')
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="{{ route('home') }}" class="navbar-brand">
-            <span class="seal"><x-icon name="shield-check" /></span>
-            <span>PanshengGuard</span>
-        </a>
+    <nav class="nav" aria-label="Main">
+        <div class="container nav-inner">
+            <a href="{{ route('home') }}" class="brand" aria-label="PanshengGuard home">
+                <span class="brand-mark"><x-brand-mark /></span>
+                <span>PanshengGuard</span>
+            </a>
 
-        <button type="button" class="navbar-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
-            <x-icon name="menu" />
-        </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="{{ route('home') }}" class="{{ request()->routeIs('home', 'analyze') ? 'active' : '' }}">Scan</a></li>
+                <li><a href="{{ Route::has('dashboard') ? route('dashboard') : '#' }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a></li>
+                <li><a href="{{ Route::has('history') ? route('history') : '#' }}" class="{{ request()->routeIs('history*') ? 'active' : '' }}">History</a></li>
+                <li><a href="{{ Route::has('about') ? route('about') : '#' }}" class="{{ request()->routeIs('about') ? 'active' : '' }}">About</a></li>
+            </ul>
 
-        <ul class="navbar-links" id="navLinks">
-            <li><a href="{{ route('home') }}" class="{{ request()->routeIs('home') ? 'active' : '' }}">Home</a></li>
-            <li><a href="{{ Route::has('history') ? route('history') : '#' }}" class="{{ request()->routeIs('history*') ? 'active' : '' }}">History</a></li>
-            <li><a href="{{ Route::has('dashboard') ? route('dashboard') : '#' }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a></li>
-            <li><a href="{{ Route::has('about') ? route('about') : '#' }}">About</a></li>
+            <div class="nav-actions">
+                <button type="button" class="icon-btn theme-toggle" data-theme-toggle aria-label="Switch colour theme" title="Switch theme">
+                    <x-icon name="moon" class="icon-moon" />
+                    <x-icon name="sun" class="icon-sun" />
+                </button>
 
-            @auth
-                <li><a href="{{ Route::has('profile.edit') ? route('profile.edit') : '#' }}">{{ Auth::user()->name }}</a></li>
-                <li>
-                    <form method="POST" action="{{ route('logout') }}" class="navbar-form">
+                @auth
+                    <a href="{{ Route::has('profile.edit') ? route('profile.edit') : '#' }}" class="nav-user" title="Your profile">
+                        <span class="avatar">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(Auth::user()->name, 0, 1)) }}</span>
+                        <span class="nav-user-name">{{ Auth::user()->name }}</span>
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}" class="nav-form">
                         @csrf
-                        <button type="submit" class="btn-login">Log out</button>
+                        <button type="submit" class="icon-btn" aria-label="Log out" title="Log out">
+                            <x-icon name="log-out" />
+                        </button>
                     </form>
-                </li>
-            @else
-                <li><a href="{{ Route::has('login') ? route('login') : '#' }}" class="btn-login">Log in</a></li>
-            @endauth
-        </ul>
+                @else
+                    <a href="{{ Route::has('login') ? route('login') : '#' }}" class="btn btn-secondary btn-sm">Log in</a>
+                @endauth
+
+                <button type="button" class="icon-btn nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
+                    <x-icon name="menu" />
+                </button>
+            </div>
+        </div>
     </nav>
 
-    <div class="page-container">
+    <main>
         {{-- Flash messages live here so every page gets them in the same place.
-             Previously only the landing page rendered session('error'), so a
-             redirect from anywhere else lost its message silently. --}}
-        @if (session('success'))
-            <div class="alert alert-success">
-                <x-icon name="check-circle" />
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
+             A page can render its own error presentation instead (the scanner
+             does) by defining the "inline-error" section. --}}
+        @if (session('success') || (session('error') && ! View::hasSection('inline-error')))
+            <div class="container flash-stack">
+                @if (session('success'))
+                    <div class="alert alert-success" role="status">
+                        <x-icon name="check-circle" />
+                        <span>{{ session('success') }}</span>
+                    </div>
+                @endif
 
-        @if (session('error'))
-            <div class="alert alert-error">
-                <x-icon name="alert-circle" />
-                <span>{{ session('error') }}</span>
+                @if (session('error') && ! View::hasSection('inline-error'))
+                    <div class="alert alert-error" role="alert">
+                        <x-icon name="alert-circle" />
+                        <span>{{ session('error') }}</span>
+                    </div>
+                @endif
             </div>
         @endif
 
         @yield('content')
-    </div>
+    </main>
 
     <footer class="footer">
-        <div class="footer-mark">
-            <x-icon name="shield" />
-            <span>PanshengGuard</span>
+        <div class="container">
+            <div class="footer-inner">
+                <div>
+                    <a href="{{ route('home') }}" class="brand">
+                        <span class="brand-mark"><x-brand-mark /></span>
+                        <span>PanshengGuard</span>
+                    </a>
+                    <p>Email threat analysis that explains its reasoning &mdash; so you can see the threat before you click.</p>
+                </div>
+                <div>
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="{{ route('home') }}#scanner">Analyze an email</a></li>
+                        <li><a href="{{ Route::has('dashboard') ? route('dashboard') : '#' }}">Dashboard</a></li>
+                        <li><a href="{{ Route::has('history') ? route('history') : '#' }}">Analysis history</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Project</h4>
+                    <ul>
+                        <li><a href="{{ Route::has('about') ? route('about') : '#' }}">About PanshengGuard</a></li>
+                        @auth
+                            <li><a href="{{ Route::has('profile.edit') ? route('profile.edit') : '#' }}">Browser extension</a></li>
+                        @else
+                            <li><a href="{{ Route::has('register') ? route('register') : '#' }}">Create an account</a></li>
+                        @endauth
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-base">
+                <span>&copy; {{ date('Y') }} PanshengGuard &middot; Final Year Project</span>
+                <span>Built to help you spot deception before it costs you.</span>
+            </div>
         </div>
-        <p>
-            Final Year Project, {{ date('Y') }}<br>
-            <a href="{{ Route::has('about') ? route('about') : '#' }}">About</a> &middot; Built to help you spot deception before it costs you.
-        </p>
     </footer>
 
-    <script>
-        document.getElementById('navToggle')?.addEventListener('click', function () {
-            const open = document.getElementById('navLinks').classList.toggle('open');
-            this.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
-
-        // Show a loading state on any form submit button so slow API calls feel
-        // responsive. The button keeps its own wording — a login form should not
-        // announce "Analysing…" — unless it opts in via data-loading-text.
-        document.querySelectorAll('form').forEach(function (form) {
-            form.addEventListener('submit', function () {
-                const btn = form.querySelector('button[type="submit"]');
-                if (!btn || btn.disabled) return;
-
-                const busyText = btn.dataset.loadingText || btn.textContent.trim();
-                btn.dataset.originalText = btn.innerHTML;
-                btn.innerHTML = '<span class="btn-spinner"></span>' + busyText;
-                btn.disabled = true;
-            });
-        });
-    </script>
+    @include('partials.ui-script')
 
     @stack('scripts')
 </body>

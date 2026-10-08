@@ -4,75 +4,102 @@
 
 @section('content')
 
-    <div class="eyebrow">The Case File on Us</div>
-    <h1>About PanshengGuard</h1>
-    <p class="section-lead">
-        A final year project built to help everyday people spot phishing emails before they cost them something.
-    </p>
-
-    <div class="card">
-        <div class="card-header">
-            <span class="card-icon"><x-icon name="search" /></span>
-            <h3>What this does</h3>
-        </div>
-        <p>
-            PanshengGuard reads a pasted email and checks it two ways: a machine learning model trained
-            to recognise phishing patterns in the wording, and a rule-based scan for classic manipulation
-            tactics &mdash; urgency, false authority, fear, and scarcity. Any links in the email are also
-            checked against VirusTotal's threat database. The result is a plain-language verdict, not just
-            a raw score, so you actually know what to do next.
+<div class="container">
+    <header class="page-head">
+        <div class="eyebrow">About</div>
+        <h1 style="max-width: 18ch;">A second opinion before you click.</h1>
+        <p class="lead">
+            PanshengGuard is a final year project built to help everyday people recognise phishing emails
+            &mdash; and understand why they are dangerous &mdash; before they cost them something.
         </p>
-    </div>
+    </header>
 
-    <div class="card">
-        <div class="card-header">
-            <span class="card-icon"><x-icon name="layers" /></span>
-            <h3>How it works</h3>
-        </div>
-        <p>The email you paste goes through four steps:</p>
-        <ol class="step-list">
-            <li><strong>Cleaning</strong> &mdash; the text is stripped of noise and reduced to its core wording.</li>
-            <li><strong>Classification</strong> &mdash; a trained model estimates the probability the email is phishing.</li>
-            <li><strong>Technique detection</strong> &mdash; the wording is scanned for manipulation tactics and blended into a sophistication score.</li>
-            <li><strong>Link scanning</strong> &mdash; any URLs found are checked against VirusTotal's engines.</li>
-        </ol>
-    </div>
+    <div class="page-body">
+        <section class="split reveal">
+            <div>
+                <div class="eyebrow">01</div>
+                <h2>What it does</h2>
+            </div>
+            <div class="split-body">
+                <p>
+                    PanshengGuard reads an email and checks it two ways: a machine learning model trained to
+                    recognise phishing in the wording and structure of a message, and a rule-based scan for the
+                    classic manipulation tactics &mdash; urgency, false authority, fear and scarcity. Links are
+                    checked against VirusTotal&rsquo;s threat intelligence.
+                </p>
+                <p>
+                    The result is two CVSS-style scores out of 10 &mdash; phishing probability and sophistication &mdash;
+                    with a plain-language explanation, so you know
+                    not just <em>whether</em> to worry, but <em>why</em> &mdash; and what to do next.
+                </p>
+            </div>
+        </section>
 
-    <div class="card">
-        <div class="card-header">
-            <span class="card-icon"><x-icon name="lightbulb" /></span>
-            <h3>Why it exists</h3>
-        </div>
-        <p>
-            Phishing emails succeed because they're built to bypass careful thinking &mdash; urgency and
-            fear push people to act before they question anything. This project exists to slow that down:
-            giving people a second opinion, in plain language, before they click.
-        </p>
-    </div>
+        <section class="split reveal">
+            <div>
+                <div class="eyebrow">02</div>
+                <h2>How it works</h2>
+            </div>
+            <div class="split-body">
+                <ol class="num-list">
+                    <li><span><strong>Cleaning</strong> &mdash; the text is stripped of noise, de-obfuscated, and personal details are masked.</span></li>
+                    <li><span><strong>Classification</strong> &mdash; a trained model estimates how likely the email is to be phishing.</span></li>
+                    <li><span><strong>Technique detection</strong> &mdash; the wording is scanned for manipulation tactics and blended into the sophistication score.</span></li>
+                    <li><span><strong>Link intelligence</strong> &mdash; URLs are checked against VirusTotal&rsquo;s scanning engines.</span></li>
+                </ol>
+            </div>
+        </section>
 
-    <div class="card">
-        <div class="card-header">
-            <span class="card-icon"><x-icon name="cpu" /></span>
-            <h3>Built with</h3>
-        </div>
-        <ul class="stack-list">
-            <li><strong>Python</strong> <span class="text-muted">FastAPI, scikit-learn, spaCy &mdash; the detection engine</span></li>
-            <li><strong>Laravel</strong> <span class="text-muted">the web experience and scan history</span></li>
-            <li><strong>VirusTotal</strong> <span class="text-muted">link reputation intelligence</span></li>
-        </ul>
-    </div>
+        <section class="split reveal">
+            <div>
+                <div class="eyebrow">03</div>
+                <h2>CVSS-style scores</h2>
+            </div>
+            <div class="split-body">
+                <p>
+                    Every analysis gets two scores from 0.0 to 10.0: <strong>phishing probability</strong>
+                    (how likely the email is phishing) and <strong>sophistication</strong> (how convincing its
+                    manipulation is). Both use the CVSS severity bands:
+                </p>
+                <ul class="def-list">
+                    <li><strong><x-risk-badge :probability="0.2" /></strong><span>0.1&ndash;3.9 &middot; little sign of phishing (0.0 is None)</span></li>
+                    <li><strong><x-risk-badge :probability="0.55" /></strong><span>4.0&ndash;6.9 &middot; warning signs worth a second look</span></li>
+                    <li><strong><x-risk-badge :probability="0.8" /></strong><span>7.0&ndash;8.9 &middot; strong phishing indicators</span></li>
+                    <li><strong><x-risk-badge :probability="0.95" /></strong><span>9.0&ndash;10.0 &middot; treat as a phishing attack</span></li>
+                </ul>
+            </div>
+        </section>
 
-    <div class="card">
-        <div class="card-header">
-            <span class="card-icon is-green"><x-icon name="lock" /></span>
-            <h3>A note on privacy</h3>
-        </div>
-        <p>
-            Emails you submit are used only to produce your result. Personal details like email addresses,
-            phone numbers, and card numbers are automatically masked before analysis. Scans are saved to
-            your account so you can revisit them, and you're free to delete your account &mdash; and
-            everything tied to it &mdash; at any time from your profile.
-        </p>
+        <section class="split reveal">
+            <div>
+                <div class="eyebrow">04</div>
+                <h2>Built with</h2>
+            </div>
+            <div class="split-body">
+                <ul class="def-list">
+                    <li><strong>Python</strong><span>FastAPI, scikit-learn and spaCy &mdash; the detection engine</span></li>
+                    <li><strong>Laravel</strong><span>The web application and analysis history</span></li>
+                    <li><strong>Chrome</strong><span>A Gmail extension that analyzes the message you are reading</span></li>
+                    <li><strong>VirusTotal</strong><span>Link reputation intelligence</span></li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="split reveal">
+            <div>
+                <div class="eyebrow">05</div>
+                <h2>Privacy</h2>
+            </div>
+            <div class="split-body">
+                <p>
+                    Emails you submit are used only to produce your result. Email addresses, phone numbers and
+                    card numbers are masked automatically before analysis. Only a short, masked excerpt is stored
+                    with each analysis, and you can delete any analysis &mdash; or your whole account and
+                    everything tied to it &mdash; at any time.
+                </p>
+            </div>
+        </section>
     </div>
+</div>
 
 @endsection

@@ -13,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind the Cloudflare tunnel the app receives plain HTTP from the
+        // tunnel container while visitors use HTTPS. Trusting the forwarded
+        // headers makes Laravel build https:// links and assets, otherwise
+        // browsers block the stylesheet and scripts as mixed content.
+        $middleware->trustProxies(at: '*');
+
         // The browser extension calls from a chrome-extension:// origin, so
         // the API routes need CORS. Web routes deliberately do not - nothing
         // outside the site should be posting to them.

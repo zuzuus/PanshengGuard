@@ -1,49 +1,43 @@
 @extends('layouts.site')
 
-@section('title', 'Scan History — PanshengGuard')
+@section('title', 'Analysis History — PanshengGuard')
 
 @section('content')
 
-    <div class="eyebrow">Case Archive</div>
-    <h1>Your Scan History</h1>
-    <p class="section-lead">
-        Every email you've analysed, kept on record.
-    </p>
-
-    @if ($scans->isEmpty())
-        <div class="card">
-            <div class="empty-state">No scans yet. <a href="{{ route('home') }}">Analyse your first email</a>.</div>
-        </div>
-    @else
-        @foreach ($scans as $scan)
-            @php
-                $riskClass = match($scan->risk) {
-                    'Low Risk' => 'risk-low',
-                    'Moderate Risk' => 'risk-moderate',
-                    'High Risk' => 'risk-high',
-                    'Critical Risk' => 'risk-critical',
-                    default => 'risk-low',
-                };
-                $accentColor = match($scan->risk) {
-                    'Low Risk' => 'var(--risk-low)',
-                    'Moderate Risk' => 'var(--risk-moderate)',
-                    'High Risk' => 'var(--risk-high)',
-                    'Critical Risk' => 'var(--risk-critical)',
-                    default => 'var(--risk-moderate)',
-                };
-            @endphp
-            <a href="{{ route('history.show', $scan) }}" class="history-row">
-                <span class="history-row-accent" style="background: {{ $accentColor }};"></span>
-                <div class="history-row-body">
-                    <div class="label">{{ $scan->created_at->format('d M Y, g:i A') }}</div>
-                    <p class="history-row-snippet">{{ $scan->email_snippet }}</p>
-                </div>
-                <span class="badge {{ $riskClass }}">{{ $scan->risk }}</span>
-                <span class="history-row-arrow"><x-icon name="arrow-right" /></span>
+<div class="container">
+    <header class="page-head">
+        <div class="page-head-row">
+            <div>
+                <div class="eyebrow">Analysis history</div>
+                <h1>Every email you&rsquo;ve analyzed</h1>
+                <p class="lead">Open any analysis to see its full PanshengGuard report. Only a short, masked excerpt of each email is stored.</p>
+            </div>
+            <a href="{{ route('home') }}#scanner" class="btn btn-primary btn-label-caps">
+                <x-icon name="scan" />
+                Analyze email
             </a>
-        @endforeach
+        </div>
+    </header>
 
-        {{ $scans->links() }}
-    @endif
+    <div class="page-body">
+        @if ($scans->isEmpty())
+            <div class="panel">
+                <div class="empty-state">
+                    <div class="empty-state-icon"><x-icon name="inbox" /></div>
+                    <h3>No analyses yet</h3>
+                    <p>When you analyze an email &mdash; here or with the Gmail extension &mdash; it appears in this list.</p>
+                    <a href="{{ route('home') }}#scanner" class="btn btn-primary">
+                        <x-icon name="scan" />
+                        Analyze your first email
+                    </a>
+                </div>
+            </div>
+        @else
+            @include('partials.scan-list', ['scans' => $scans])
+
+            {{ $scans->links() }}
+        @endif
+    </div>
+</div>
 
 @endsection

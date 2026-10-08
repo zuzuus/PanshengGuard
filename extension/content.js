@@ -22,19 +22,66 @@ const SELECTORS = {
 };
 
 /**
- * How loud each verdict should be.
+ * Score presentation — CVSS-style, matching the website report.
  *
- * A single banner size for every outcome trains people to stop reading it. A
- * clean result should be a quiet strip; a critical one should be hard to scroll
- * past. `compact` collapses the reasoning behind a summary line for the two
- * lower tiers, where the detail is rarely what the reader needs.
+ * Two scores, both straight from the API and shown on one decimal out of 10:
+ *   phishing probability  = probability (%) / 10
+ *   sophistication score  = sophistication_score (0-100) / 10
+ * with the CVSS v3 severity bands: None 0.0 · Low 0.1-3.9 · Medium 4.0-6.9 ·
+ * High 7.0-8.9 · Critical 9.0-10.0. Display conversion only; scoring is
+ * untouched.
+ *
+ * Banner weight still follows severity (of the phishing probability): Low or
+ * None is a quiet card with the reasoning tucked behind a summary line.
  */
-const SEVERITY = {
-  'Critical Risk': { cls: 'pg-critical', compact: false, icon: '✖' },
-  'High Risk':     { cls: 'pg-high',     compact: false, icon: '⚠' },
-  'Moderate Risk': { cls: 'pg-moderate', compact: true,  icon: '⚠' },
-  'Low Risk':      { cls: 'pg-low',      compact: true,  icon: '✓' },
-};
+const SEVERITY = [
+  { test: (v) => v <= 0, cls: 'pg-band-low',      name: 'None',     compact: true  },
+  { test: (v) => v < 4,  cls: 'pg-band-low',      name: 'Low',      compact: true  },
+  { test: (v) => v < 7,  cls: 'pg-band-moderate', name: 'Medium',   compact: false },
+  { test: (v) => v < 9,  cls: 'pg-band-high',     name: 'High',     compact: false },
+  { test: () => true,    cls: 'pg-band-critical', name: 'Critical', compact: false },
+];
+const BAND_CLASSES = ['pg-band-low', 'pg-band-moderate', 'pg-band-high', 'pg-band-vhigh', 'pg-band-critical'];
+
+function cvssFromPercent(percent) {
+  const value = Number(percent);
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(10, Math.round(value) / 10));
+}
+
+function severityFor(v) {
+  return SEVERITY.find((s) => s.test(v));
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/** PanshengGuard mark, built as DOM nodes (no innerHTML inside Gmail). */
+function brandMark() {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  [
+    'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z',
+    'M8 12h8',
+  ].forEach((d) => {
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', d);
+    svg.appendChild(path);
+  });
+  return svg;
+}
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
 
 const TECHNIQUE_CLASS = {
   urgency: 'pg-hl-urgency',
@@ -208,128 +255,249 @@ function highlightTechniques(root, techniques) {
  * Banner
  * ------------------------------------------------------------------ */
 
+function stopTimers(banner) {
+  (banner._pgTimers || []).forEach(clearTimeout);
+  banner._pgTimers = [];
+}
+
+function bannerTop(statusText) {
+  const top = el('div', 'pg-top');
+  const brand = el('span', 'pg-brand');
+  const mark = el('span', 'pg-mark');
+  mark.appendChild(brandMark());
+  brand.appendChild(mark);
+  brand.appendChild(el('span', 'pg-brand-name', 'PanshengGuard'));
+  top.appendChild(brand);
+  top.appendChild(el('span', 'pg-status', statusText));
+  return top;
+}
+
+/**
+ * Loading state, shown while the real request is in flight. The steps only
+ * advance visually; the last one stays open until the answer arrives.
+ */
+function renderLoading(banner) {
+  stopTimers(banner);
+  banner.className = 'pg-banner pg-loading';
+  banner.textContent = '';
+
+  banner.appendChild(bannerTop('Analyzing'));
+  banner.appendChild(el('div', 'pg-loading-title', 'Analyzing this email…'));
+
+  const bar = el('div', 'pg-scanbar');
+  bar.appendChild(el('span', 'pg-scanbar-line'));
+  banner.appendChild(bar);
+
+  const list = el('ul', 'pg-steps');
+  const steps = ['Email content', 'Suspicious phrases', 'Threat intelligence'].map((label) => {
+    const item = el('li', 'pg-step');
+    item.appendChild(el('span', 'pg-step-dot'));
+    item.appendChild(el('span', 'pg-step-label', label));
+    list.appendChild(item);
+    return item;
+  });
+  banner.appendChild(list);
+
+  const set = (item, state) => { item.className = `pg-step ${state ? `is-${state}` : ''}`; };
+  set(steps[0], 'active');
+  banner._pgTimers = [
+    setTimeout(() => { set(steps[0], 'done'); set(steps[1], 'active'); }, 600),
+    setTimeout(() => { set(steps[1], 'done'); set(steps[2], 'active'); }, 1400),
+  ];
+}
+
 function renderError(banner, message) {
+  stopTimers(banner);
   banner.className = 'pg-banner pg-error';
   banner.textContent = '';
 
-  const head = document.createElement('div');
-  head.className = 'pg-head';
-  const title = document.createElement('span');
-  title.className = 'pg-verdict';
-  title.textContent = 'Could not check this email';
-  head.appendChild(title);
-  banner.appendChild(head);
+  banner.appendChild(bannerTop('Not checked'));
 
-  const body = document.createElement('div');
-  body.className = 'pg-message';
-  body.textContent = message;
-  banner.appendChild(body);
+  const title = el('div', 'pg-error-title', 'Could not check this email');
+  banner.appendChild(title);
+
+  banner.appendChild(el('div', 'pg-message', message));
+
+  const actions = el('div', 'pg-actions');
+  const retry = el('button', 'pg-btn pg-btn-primary', 'Try again');
+  retry.type = 'button';
+  retry.addEventListener('click', () => { if (banner._pgScanButton) banner._pgScanButton.click(); });
+  actions.appendChild(retry);
+  banner.appendChild(actions);
+}
+
+/**
+ * One CVSS-style score block: kicker, "7.6 / 10", severity and a 10-segment
+ * bar that fills continuously (6.1 = six segments and a tenth).
+ */
+function scoreBlock(label, sub) {
+  const block = el('div', 'pg-metric');
+  block.appendChild(el('div', 'pg-kicker', label));
+  const line = el('div', 'pg-score');
+  const value = el('span', 'pg-score-value', '0.0');
+  line.appendChild(value);
+  line.appendChild(el('span', 'pg-score-max', '/ 10'));
+  block.appendChild(line);
+  const sev = el('div', 'pg-band', '');
+  block.appendChild(sev);
+  const meter = el('div', 'pg-meter');
+  const cells = [];
+  for (let i = 0; i < 10; i += 1) {
+    const cell = el('span');
+    meter.appendChild(cell);
+    cells.push(cell);
+  }
+  block.appendChild(meter);
+  block.appendChild(el('div', 'pg-raw', sub));
+  return { block, value, sev, cells };
+}
+
+/** Count both scores up from 0.0 so they read as generated, not printed. */
+function animateScores(banner, metrics) {
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const paint = (t) => {
+    metrics.forEach((m) => {
+      const v = Math.round(m.target * t * 10) / 10;
+      m.value.textContent = v.toFixed(1);
+      m.cells.forEach((cell, i) => cell.style.setProperty('--f', Math.max(0, Math.min(1, v - i)).toFixed(2)));
+      const sev = severityFor(v);
+      m.sev.textContent = sev.name;
+      BAND_CLASSES.forEach((c) => m.block.classList.remove(c));
+      m.block.classList.add(sev.cls);
+    });
+  };
+  if (reduce) { paint(1); return; }
+
+  const start = performance.now();
+  const step = () => {
+    const p = Math.min(1, (performance.now() - start) / 900);
+    paint(1 - Math.pow(1 - p, 3));
+    if (p < 1) banner._pgTimers.push(setTimeout(step, 16));
+  };
+  paint(0);
+  banner._pgTimers.push(setTimeout(step, 120));
 }
 
 function renderResult(banner, bodyEl, data) {
+  stopTimers(banner);
+
   if (!data || !data.ok) {
     clearHighlights(bodyEl);
     renderError(banner, (data && data.message) || 'The extension background worker did not reply.');
     return;
   }
 
-  const severity = SEVERITY[data.risk] || SEVERITY['Moderate Risk'];
+  const probScore = cvssFromPercent(data.probability);          // API sends a percentage
+  const sophScore = cvssFromPercent(data.sophistication_score); // 0-100
+  const band = severityFor(probScore);
   const { count, used } = highlightTechniques(bodyEl, data.techniques);
 
-  banner.className = `pg-banner ${severity.cls}${severity.compact ? ' pg-compact' : ''}`;
+  // Light the highlighted phrases one after another, top to bottom.
+  bodyEl.querySelectorAll('mark.pg-hl').forEach((mark, i) => {
+    mark.style.animationDelay = `${Math.min(i, 12) * 90}ms`;
+    mark.classList.add('pg-hl-reveal');
+  });
+
+  banner.className = `pg-banner ${band.cls}${band.compact ? ' pg-compact' : ''}`;
   banner.textContent = '';
 
-  // --- headline ---
-  const head = document.createElement('div');
-  head.className = 'pg-head';
+  banner.appendChild(bannerTop('Threat assessment'));
 
-  const icon = document.createElement('span');
-  icon.className = 'pg-icon';
-  icon.textContent = severity.icon;
-  head.appendChild(icon);
+  // --- score + detected ---
+  const main = el('div', 'pg-main');
 
-  const verdict = document.createElement('span');
-  verdict.className = 'pg-verdict';
-  verdict.textContent = data.label;
-  head.appendChild(verdict);
+  const scores = el('div', 'pg-scores');
+  const prob = scoreBlock('Phishing probability', 'How likely it is phishing');
+  const soph = scoreBlock('Sophistication', 'How convincing the tactics are');
+  scores.appendChild(prob.block);
+  scores.appendChild(soph.block);
+  main.appendChild(scores);
 
-  const badge = document.createElement('span');
-  badge.className = 'pg-badge';
-  badge.textContent = data.risk;
-  head.appendChild(badge);
-
-  const score = document.createElement('span');
-  score.className = 'pg-score';
-  score.textContent = `${data.probability}% phishing probability`;
-  head.appendChild(score);
-
-  banner.appendChild(head);
-
-  // --- what got marked up, and in which colour ---
-  if (count > 0) {
-    const legend = document.createElement('div');
-    legend.className = 'pg-legend';
-
-    const intro = document.createElement('span');
-    intro.className = 'pg-legend-intro';
-    intro.textContent = `${count} phrase${count === 1 ? '' : 's'} highlighted below:`;
-    legend.appendChild(intro);
-
-    used.forEach((technique) => {
-      const chip = document.createElement('span');
-      chip.className = `pg-chip ${TECHNIQUE_CLASS[technique]}`;
-      chip.textContent = TECHNIQUE_LABEL[technique] || technique;
-      legend.appendChild(chip);
+  const detectCol = el('div', 'pg-detect-col');
+  detectCol.appendChild(el('div', 'pg-kicker', 'Detected'));
+  const chips = el('div', 'pg-chips');
+  const techniquesFound = used.length
+    ? used
+    : Object.keys(data.techniques || {}).filter((t) => TECHNIQUE_CLASS[t]);
+  if (techniquesFound.length) {
+    techniquesFound.forEach((technique, i) => {
+      const chip = el('span', `pg-chip ${TECHNIQUE_CLASS[technique]}`, TECHNIQUE_LABEL[technique] || technique);
+      chip.style.animationDelay = `${300 + i * 140}ms`;
+      chips.appendChild(chip);
     });
-
-    banner.appendChild(legend);
+  } else {
+    chips.appendChild(el('span', 'pg-chip pg-chip-none', 'No manipulation techniques'));
   }
+  detectCol.appendChild(chips);
+
+  const meta = el('div', 'pg-meta');
+  meta.textContent = count > 0
+    ? `${count} phrase${count === 1 ? '' : 's'} highlighted in the message · Model: ${data.label === 'PHISHING' ? 'Phishing' : 'Legitimate'}`
+    : `Model: ${data.label === 'PHISHING' ? 'Phishing' : 'Legitimate'}`;
+  detectCol.appendChild(meta);
+  main.appendChild(detectCol);
+
+  banner.appendChild(main);
 
   // --- structural signals ---
   const signals = Array.isArray(data.signals) ? data.signals : [];
-
   if (signals.length) {
-    // Compact tiers hide the reasoning behind a summary line; the loud tiers
-    // show it outright, because that is when the reader actually needs it.
-    const host = severity.compact ? document.createElement('details') : document.createElement('div');
-
-    if (severity.compact) {
-      const summary = document.createElement('summary');
-      summary.textContent = `${signals.length} thing${signals.length === 1 ? '' : 's'} worth knowing`;
-      host.appendChild(summary);
+    // Quiet bands hide the reasoning behind a summary line; the loud bands
+    // show it outright, because that is when the reader needs it.
+    const host = band.compact ? document.createElement('details') : el('div', 'pg-signals-wrap');
+    if (band.compact) {
+      host.appendChild(el('summary', '', `${signals.length} thing${signals.length === 1 ? '' : 's'} worth knowing`));
+    } else {
+      host.appendChild(el('div', 'pg-kicker', 'Why'));
     }
-
-    const list = document.createElement('ul');
-    list.className = 'pg-signals';
-    signals.forEach((signal) => {
-      const item = document.createElement('li');
-      item.textContent = signal;
-      list.appendChild(item);
-    });
+    const list = el('ul', 'pg-signals');
+    signals.forEach((signal) => list.appendChild(el('li', '', signal)));
     host.appendChild(list);
     banner.appendChild(host);
   } else {
-    const none = document.createElement('p');
-    none.className = 'pg-none';
-    none.textContent = 'No structural red flags fired on this message.';
-    banner.appendChild(none);
+    banner.appendChild(el('p', 'pg-none', 'No structural red flags fired on this message.'));
   }
 
-  // --- link back to the full report ---
+  // --- actions ---
+  const actions = el('div', 'pg-actions');
   if (data.detail_url) {
-    const link = document.createElement('a');
-    link.className = 'pg-link';
+    const link = el('a', 'pg-btn pg-btn-primary', 'View full report');
     link.href = data.detail_url;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    link.textContent = 'View the full report';
-    banner.appendChild(link);
+    actions.appendChild(link);
   }
+  const again = el('button', 'pg-btn', 'Scan again');
+  again.type = 'button';
+  again.addEventListener('click', () => { if (banner._pgScanButton) banner._pgScanButton.click(); });
+  actions.appendChild(again);
+  banner.appendChild(actions);
+
+  animateScores(banner, [
+    { ...prob, target: probScore },
+    { ...soph, target: sophScore },
+  ]);
 }
 
 /* ------------------------------------------------------------------ *
  * Wiring
  * ------------------------------------------------------------------ */
+
+/** False once the extension has been reloaded under this open tab. */
+function extensionAlive() {
+  try {
+    return Boolean(chrome.runtime && chrome.runtime.id);
+  } catch (err) {
+    return false;
+  }
+}
+
+function showReloadNotice(banner, button) {
+  stopTimers(banner);
+  button.disabled = false;
+  button.textContent = 'Scan with PanshengGuard';
+  renderError(banner, 'PanshengGuard was updated or reloaded. Refresh this Gmail tab (F5), then scan again.');
+}
 
 function attach(bodyEl) {
   if (bodyEl.dataset.pgAttached === '1') return;
@@ -340,35 +508,58 @@ function attach(bodyEl) {
 
   const banner = document.createElement('div');
   banner.className = 'pg-banner pg-idle';
-  banner.textContent = 'Not checked yet.';
+  banner.textContent = 'Not checked yet. Scan this email to see its threat score.';
 
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'pg-button';
   button.textContent = 'Scan with PanshengGuard';
+  banner._pgScanButton = button; // lets "Scan again" / "Try again" reuse this button
 
   // Manual rather than automatic on purpose: scanning every message as it
   // opens would send the contents of the whole mailbox to the server, and
   // would burn the per-user rate limit within seconds of scrolling.
   button.addEventListener('click', () => {
+    // After the extension is reloaded or updated in chrome://extensions, the
+    // copy of this script already running in an open Gmail tab is cut off
+    // from it ("Extension context invalidated"). Say so plainly instead of
+    // throwing; refreshing the tab loads the new version.
+    if (!extensionAlive()) {
+      showReloadNotice(banner, button);
+      return;
+    }
+
     button.disabled = true;
     button.textContent = 'Scanning…';
     clearHighlights(bodyEl);
-    banner.className = 'pg-banner pg-idle';
-    banner.textContent = 'Checking this email…';
+    renderLoading(banner);
 
-    chrome.runtime.sendMessage(
-      { type: 'analyze', emailText: extractEmail(bodyEl), checkUrls: false },
-      (data) => {
-        button.disabled = false;
-        button.textContent = 'Scan again';
-        renderResult(banner, bodyEl, data);
-      }
-    );
+    try {
+      chrome.runtime.sendMessage(
+        { type: 'analyze', emailText: extractEmail(bodyEl), checkUrls: false },
+        (data) => {
+          button.disabled = false;
+          button.textContent = 'Scan again';
+          renderResult(banner, bodyEl, data);
+        }
+      );
+    } catch (err) {
+      showReloadNotice(banner, button);
+    }
   });
 
-  container.prepend(banner);
-  container.prepend(button);
+  // Insert directly above the message body. Gmail's message container is a
+  // multi-column flex row (avatar | content); prepending to it squeezed the
+  // banner into a sliver beside the avatar. The body's own parent is the
+  // content column, so the banner gets the full reading width.
+  const host = bodyEl.parentElement || container;
+  if (host === container) {
+    container.prepend(banner);
+    container.prepend(button);
+  } else {
+    host.insertBefore(button, bodyEl);
+    host.insertBefore(banner, bodyEl);
+  }
 }
 
 /**

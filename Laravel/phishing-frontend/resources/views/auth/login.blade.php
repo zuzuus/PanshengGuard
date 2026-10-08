@@ -1,7 +1,7 @@
 <x-guest-layout>
-    <div class="eyebrow">Welcome Back</div>
-    <h1>Log In</h1>
-    <p class="auth-subtitle">Sign in to analyse emails and review your scan history.</p>
+    <div class="eyebrow">Welcome back</div>
+    <h1>Log in</h1>
+    <p class="auth-subtitle">Sign in to analyze emails and review your analysis history.</p>
 
     <x-auth-session-status class="auth-field" :status="session('status')" />
 
@@ -20,7 +20,7 @@
             <x-input-error :messages="$errors->get('password')" />
         </div>
 
-        <label>
+        <label class="check auth-remember">
             <input id="remember_me" type="checkbox" name="remember">
             {{ __('Remember me') }}
         </label>
@@ -45,7 +45,7 @@
         Continue with Google
     </a>
 
-    <p class="auth-footnote" style="margin-top:20px;">
+    <p class="auth-footnote">
         New here? <a href="{{ route('register') }}" class="auth-link">Create an account</a>
     </p>
 </x-guest-layout>

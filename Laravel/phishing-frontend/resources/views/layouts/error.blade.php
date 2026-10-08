@@ -13,35 +13,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Something went wrong') — PanshengGuard</title>
 
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('pg-theme'); } catch (e) {}
+            if (t !== 'light' && t !== 'dark') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v=4">
 </head>
 <body>
 
     <div class="error-shell">
-        <a href="{{ url('/') }}" class="navbar-brand auth-brand">
-            <span class="seal"><x-icon name="shield-check" /></span>
+        <a href="{{ url('/') }}" class="brand">
+            <span class="brand-mark"><x-brand-mark /></span>
             <span>PanshengGuard</span>
         </a>
 
-        <div class="card auth-card error-card">
-            <div class="error-code">@yield('code')</div>
-            <div class="error-stamp">@yield('stamp', 'Case Closed')</div>
+        <div class="error-code">@yield('code')</div>
+        <div class="eyebrow eyebrow-plain">@yield('stamp', 'Error')</div>
 
-            <h1 class="error-title">@yield('title', 'Something went wrong')</h1>
+        <h1>@yield('title', 'Something went wrong')</h1>
 
-            <p class="error-message">@yield('message')</p>
+        <p class="lead">@yield('message')</p>
 
-            <div class="error-actions">
-                <a href="{{ url('/') }}" class="btn">
-                    <x-icon name="home" />
-                    Back to the scanner
-                </a>
-                @yield('extra-action')
-            </div>
+        <div class="btn-row">
+            <a href="{{ url('/') }}" class="btn btn-primary">
+                <x-icon name="scan" />
+                Back to the scanner
+            </a>
+            @yield('extra-action')
         </div>
     </div>
 

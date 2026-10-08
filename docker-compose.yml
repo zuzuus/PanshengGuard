@@ -1,0 +1,49 @@
+# PanshengGuard — run everything with Docker, plus a free Cloudflare link.
+#
+#   docker compose up -d --build        start (first build takes a few minutes)
+#   docker compose logs cloudflared     find your https://….trycloudflare.com link
+#   docker compose down                 stop
+#
+# Ports stay exactly as before on your PC:
+#   http://127.0.0.1:8001   website (the Chrome extension keeps working)
+#   http://127.0.0.1:8000   detection API
+
+services:
+  piton:
+    build: ./Piton
+    container_name: pansheng-api
+    env_file:
+      - path: ./Piton/.env          # VIRUSTOTAL_API_KEY, if you have one
+        required: false
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+
+  web:
+    build: ./Laravel/phishing-frontend
+    container_name: pansheng-web
+    env_file:
+      - ./Laravel/phishing-frontend/.env   # your existing settings (APP_KEY, Google login, …)
+    environment:
+      # Inside Docker the API is reached by its service name, not 127.0.0.1.
+      PHISHING_API_URL: http://piton:8000
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/database/database.sqlite
+    volumes:
+      # Your existing database folder, so your accounts and history carry over.
+      - ./Laravel/phishing-frontend/database:/var/www/html/database
+    ports:
+      - "127.0.0.1:8001:8001"
+    depends_on:
+      - piton
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: pansheng-tunnel
+    # Quick Tunnel: no account or domain needed. Prints a random public
+    # https://….trycloudflare.com address that changes on every restart.
+    command: tunnel --no-autoupdate --url http://web:8001
+    depends_on:
+      - web
+    restart: unless-stopped

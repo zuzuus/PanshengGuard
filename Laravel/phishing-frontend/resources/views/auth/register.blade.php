@@ -1,7 +1,7 @@
 <x-guest-layout>
-    <div class="eyebrow">Create Account</div>
-    <h1>Register</h1>
-    <p class="auth-subtitle">Set up an account to save your scan results and track trends over time.</p>
+    <div class="eyebrow">Create account</div>
+    <h1>Get started</h1>
+    <p class="auth-subtitle">Save every analysis and track threat trends over time.</p>
 
     <form method="POST" action="{{ route('register') }}">
         @csrf

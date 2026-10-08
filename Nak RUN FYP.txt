@@ -13,3 +13,104 @@ attack.py
 python clean_features.py      # kalau dataset berubah
 python train.py               # tulis model.pkl + vectorizer.pkl + scaler.pkl
 Ctrl+C, start semula uvicorn  # ni yang senang terlupa
+
+
+==================================================
+METHOD 1 - RUN BIASA (tanpa Docker)
+==================================================
+
+Terminal 1 - Kat File Piton
+  cd C:\Users\User\Pansheng\Piton
+  python -m uvicorn main:app --reload --port 8000
+
+Terminal 2 - Kat Laravel
+  cd C:\Users\User\Pansheng\Laravel\phishing-frontend
+  php artisan view:clear          # lepas tukar design / blade
+  php artisan serve --port=8001
+
+Buka: http://127.0.0.1:8001
+Lepas edit CSS/JS/blade -> Ctrl + F5 kat browser
+
+
+==================================================
+METHOD 2 - DEPLOY GUNA DOCKER + CLOUDFLARE (link public)
+==================================================
+
+--- SETUP SEKALI JE (first time) ---
+
+1. Install Docker Desktop (pilih AMD64 / x86_64)
+   https://www.docker.com/products/docker-desktop/
+
+2. Kalau keluar "Virtual Machine Platform not enabled":
+   Buka PowerShell -> Run as administrator, run:
+     dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+     dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+   RESTART Windows 
+   Lepas restart, PowerShell admin:
+     wsl --update
+
+3. Buka Docker Desktop, tunggu sampai "Engine running"
+
+4. Pastikan file ni ada:
+     Laravel\phishing-frontend\.env     (mesti ada APP_KEY)
+     Piton\.env                         (optional - VIRUSTOTAL_API_KEY=...)
+
+--- SETIAP KALI NAK DEPLOY / DEMO ---
+
+1. STOP dulu server biasa dekat vscode (Ctrl+C kat uvicorn & php artisan serve)
+   sebab Docker guna port sama 8000 & 8001
+
+2. Buka Docker Desktop -> tunggu "Engine running"
+
+3. PowerShell:
+     cd C:\Users\User\Pansheng
+     powershell -ExecutionPolicy Bypass -File .\docker-start.ps1
+
+   First time lama sikit (5-10 min, dia build image).
+   Bila siap dia print:
+     Local website : http://127.0.0.1:8001
+     Public link   : https://xxxx-xxxx.trycloudflare.com   <- bagi link ni kat orang
+
+4. Link public TUKAR setiap kali restart. Cari balik:
+     docker compose logs cloudflared
+
+--- COMMAND DOCKER (run kat directory Pansheng) ---
+
+  docker compose up -d --build     # start / rebuild lepas edit code
+  docker compose down              # stop semua
+  docker compose ps                # tengok container jalan ke tak
+  docker compose logs web          # error Laravel
+  docker compose logs piton        # error Python / model
+  docker compose logs cloudflared  # link public
+  docker compose restart piton     # restart API je (contoh lepas train model)
+
+--- PENTING ---
+- Lepas EDIT CODE (Laravel / Python), kena rebuild:
+    docker compose up -d --build
+- Lepas TRAIN MODEL baru (model.pkl/vectorizer.pkl/scaler.pkl):
+    docker compose up -d --build piton
+  (sama macam "Ctrl+C, start semula uvicorn" - ni yang senang terlupa)
+- Database (akaun & history) duduk kat Laravel\phishing-frontend\database\database.sqlite
+  -> tak hilang bila docker down / rebuild
+- Link public hidup selagi PC on & Docker running je
+- Google login tak jalan kat link public kecuali tambah
+    https://<link>/auth/google/callback
+  dalam Google Cloud Console. Login email + password ok je.
+
+
+==================================================
+CHROME EXTENSION
+==================================================
+
+1. chrome://extensions -> on "Developer mode"
+2. Load unpacked -> pilih folder:  Pansheng\extension
+3. Website: http://127.0.0.1:8001/profile -> Generate token -> copy
+4. Klik icon PanshengGuard -> Connection settings -> paste token
+   -> Save -> Test connection (kena keluar "Connected as ...")
+5. Extension guna http://127.0.0.1:8001 -> jalan untuk Cara 1 & Cara 2
+
+Lepas reload extension -> REFRESH tab Gmail (F5),
+kalau tak keluar "Extension context invalidated".
+
+
+

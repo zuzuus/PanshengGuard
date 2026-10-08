@@ -54,12 +54,16 @@ would draw a box round the wrong word in front of the reader. Where the two
 disagree the phrase is left unmarked, which is the safer direction to be wrong
 in — the banner may name a technique the highlights do not show.
 
-### How loud the banner gets
+### What the banner shows
 
-Verdicts are not all the same size. A **Critical Risk** result gets a thick
-rail, a larger heading and a shadow; **Low Risk** collapses to a quiet strip
-with its reasoning tucked behind a summary line. A single banner weight for
-every outcome trains people to stop reading it.
+The banner uses the same design as the PanshengGuard website:
+
+- **Threat score X / 10.** This is the API's `sophistication_score` divided by 10 and rounded up (minimum 1), the same conversion the website uses.
+- **Risk band:** 1–2 Low, 3–4 Moderate, 5–6 High, 7–8 Very High, 9–10 Critical. Higher bands get a stronger card. On the two lowest bands, the reasons sit behind a summary line.
+- **Detected techniques** as chips, plus the structural red flags.
+- **View full report** opens the saved report on the website. **Scan again** re-runs the scan.
+
+While the request is running, a loading card shows the steps of the analysis. If the request fails, the card shows the error and a **Try again** button.
 
 ## If the in-page button does not appear
 
@@ -108,7 +112,7 @@ retrieved later. Generating a new token revokes the old one.
 | `background.js` | Service worker — the only place that holds the token or calls the API |
 | `content.js` | Injected into Gmail; extracts the message, draws the banner |
 | `content.css` | Banner styling, scoped under `.pg-` so it cannot inherit Gmail's CSS |
-| `popup.html` / `popup.js` | Settings, connection test, and the paste-box fallback |
+| `popup.html` / `popup.css` / `popup.js` | Paste-box scanner, result card, connection settings |
 
 ## Known limits
 

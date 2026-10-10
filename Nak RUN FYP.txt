@@ -20,12 +20,11 @@ METHOD 1 - RUN BIASA (tanpa Docker)
 ==================================================
 
 Terminal 1 - Kat File Piton
-  cd C:\Users\User\Pansheng\Piton
   python -m uvicorn main:app --reload --port 8000
 
 Terminal 2 - Kat Laravel
-  cd C:\Users\User\Pansheng\Laravel\phishing-frontend
-  php artisan view:clear          # lepas tukar design / blade
+  php artisan view:clear        
+# lepas tukar design / blade
   php artisan serve --port=8001
 
 Buka: http://127.0.0.1:8001
@@ -36,7 +35,6 @@ Lepas edit CSS/JS/blade -> Ctrl + F5 kat browser
 METHOD 2 - DEPLOY GUNA DOCKER + CLOUDFLARE (link public)
 ==================================================
 
---- SETUP SEKALI JE (first time) ---
 
 1. Install Docker Desktop (pilih AMD64 / x86_64)
    https://www.docker.com/products/docker-desktop/
@@ -84,7 +82,7 @@ METHOD 2 - DEPLOY GUNA DOCKER + CLOUDFLARE (link public)
   docker compose logs cloudflared  # link public
   docker compose restart piton     # restart API je (contoh lepas train model)
 
---- PENTING ---
+--- IMPORTANT ---
 - Lepas EDIT CODE (Laravel / Python), kena rebuild:
     docker compose up -d --build
 - Lepas TRAIN MODEL baru (model.pkl/vectorizer.pkl/scaler.pkl):
